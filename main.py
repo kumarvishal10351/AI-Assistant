@@ -12,6 +12,10 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_mistralai import MistralAIEmbeddings
 import streamlit as st
 load_dotenv()
+import streamlit as st
+import os
+
+os.environ["MISTRAL_API_KEY"] = st.secrets["wEy0qYoYAOmAstKeLwdCOuArPXsSAVuZ"]
 
 
 
