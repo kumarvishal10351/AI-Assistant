@@ -60,4 +60,8 @@ faiss-cpu
 pypdf
 python-dotenv
 tiktoken
+<<<<<<< HEAD
 altair<5
+=======
+altair<5
+>>>>>>> a3a9ed0dc1a7f3d244f0ed10914e9fc4d1b327bf
