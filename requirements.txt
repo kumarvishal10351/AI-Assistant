@@ -1,67 +1,9 @@
-
+streamlit
 langchain
-langchain-core
 langchain-community
-
-# LLM Providers
-
-langchain-openai
 langchain-mistralai
-openai
-mistralai
-
-# Vector Database
-
 chromadb
-
-# Embedding Models
-
-sentence-transformers
-
-# Document Loaders dependencies
-
-pypdf
-unstructured
-beautifulsoup4
-lxml
-
-# Text Processing
-
-tiktoken
-
-# Environment Variables
-
-python-dotenv
-
-# Data Handling
-
-pandas
-numpy
-
-# API / App Layer (optional but common in RAG apps)
-
-fastapi
-uvicorn
-
-# UI (optional)
-
-streamlit
-
-# Utilities
-
-tqdm
-requests
-
-streamlit
-langchain
-langchain-community
-langchain-mistralai
-faiss-cpu
 pypdf
 python-dotenv
 tiktoken
-<<<<<<< HEAD
 altair<5
-=======
-altair<5
->>>>>>> a3a9ed0dc1a7f3d244f0ed10914e9fc4d1b327bf
