@@ -60,3 +60,4 @@ faiss-cpu
 pypdf
 python-dotenv
 tiktoken
+altair<5
