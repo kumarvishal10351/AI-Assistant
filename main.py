@@ -468,8 +468,30 @@ section[data-testid="stSidebar"]>div{padding:1.2rem 0.9rem 2rem;}
 ::-webkit-scrollbar-thumb:hover{background:rgba(124,106,247,0.4);}
 
 /* ── Hide Streamlit chrome ──────────────────────────────── */
-#MainMenu,footer,header{visibility:hidden;}
+#MainMenu,footer{visibility:hidden;}
 [data-testid="stDecoration"]{display:none;}
+/* ── Sidebar expand button (visible when sidebar is collapsed) ─ */
+[data-testid="stSidebarCollapsedControl"]{
+    visibility:visible !important;
+    z-index:999999 !important;
+}
+[data-testid="stSidebarCollapsedControl"] button{
+    visibility:visible !important;
+    background:var(--navy-mid) !important;
+    border:1px solid var(--violet-bdr) !important;
+    border-radius:0 8px 8px 0 !important;
+    color:var(--ivory) !important;
+    box-shadow:2px 0 14px rgba(124,106,247,0.25) !important;
+    cursor:pointer !important;
+}
+[data-testid="stSidebarCollapsedControl"] button:hover{
+    background:var(--violet-dim) !important;
+    border-color:var(--violet-hov) !important;
+}
+[data-testid="stSidebarCollapsedControl"] svg{
+    fill:var(--ivory) !important;
+    color:var(--ivory) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -533,6 +555,9 @@ def get_vectorstore(_embeddings):
 # ─────────────────────────────────────────────────────────────
 #  SIDEBAR
 # ─────────────────────────────────────────────────────────────
+# ─────────────────────────────────────────────────────────────
+#  SIDEBAR (FIXED + CHAT MEMORY WORKING)
+# ─────────────────────────────────────────────────────────────
 with st.sidebar:
 
     st.markdown("""
@@ -542,6 +567,110 @@ with st.sidebar:
         <p>AI Book Assistant</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── Upload ───────────────────────────────────────────────
+    st.markdown('<p class="sb-label">📂 Upload Documents</p>', unsafe_allow_html=True)
+
+    uploaded_files = st.file_uploader(
+    "Drop PDFs here",
+    type="pdf",
+    accept_multiple_files=True,
+    label_visibility="collapsed",
+    key="pdf_uploader"   # ✅ FIX
+)
+
+    if uploaded_files:
+        for f in uploaded_files:
+            st.markdown(
+                f'<div class="file-pill"><span class="fi">📄</span>{safe_text(f.name)}</div>',
+                unsafe_allow_html=True,
+            )
+
+        if st.button("⚙️  Build Knowledge Base"):
+            with st.spinner("📚 Indexing documents…"):
+                all_docs   = []
+                embeddings = get_embeddings()
+
+                for uf in uploaded_files:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                        tmp.write(uf.read())
+                        tmp_path = tmp.name
+                    try:
+                        loader = PyPDFLoader(tmp_path)
+                        docs   = loader.load()
+                        for doc in docs:
+                            doc.metadata["source"] = uf.name
+                        all_docs.extend(docs)
+                    finally:
+                        os.unlink(tmp_path)
+
+                splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1200, chunk_overlap=300
+                )
+                chunks = splitter.split_documents(all_docs)
+
+                if os.path.exists("chroma_db"):
+                    vs = Chroma(
+                        persist_directory="chroma_db",
+                        embedding_function=embeddings,
+                    )
+                    vs.add_documents(chunks)
+                else:
+                    Chroma.from_documents(
+                        documents=chunks,
+                        embedding=embeddings,
+                        persist_directory="chroma_db",
+                    )
+
+                get_vectorstore.clear()
+                st.session_state.kb_ready = True
+
+            st.success(f"✅ {len(chunks)} chunks indexed.")
+
+    # ── KB STATUS ────────────────────────────────────────────
+    st.markdown('<hr class="vdivider">', unsafe_allow_html=True)
+
+    if st.session_state.kb_ready:
+        st.success("✅ Knowledge Base Ready")
+    else:
+        st.warning("⚠️ Upload PDFs to start")
+
+    # ── CHAT MEMORY (🔥 FIXED PART) ───────────────────────────
+    st.markdown('<hr class="vdivider">', unsafe_allow_html=True)
+    st.markdown('<p class="sb-label">🧠 Conversation Memory</p>', unsafe_allow_html=True)
+
+    # Toggle memory panel
+    if st.button("📜 Show Chat History"):
+        st.session_state.show_memory = not st.session_state.get("show_memory", False)
+
+    if st.session_state.get("show_memory", False):
+
+        if "chat_history" in st.session_state and st.session_state.chat_history:
+
+            for msg in st.session_state.chat_history[-8:]:
+                role_icon = "👤" if msg["role"] == "user" else "🤖"
+
+                st.markdown(
+                    f"""
+                    <div style="background:#111828;padding:8px;
+                                border-radius:8px;margin-bottom:6px;">
+                        <b>{role_icon} {msg['role'].capitalize()}</b><br>
+                        <span style="font-size:12px;">
+                        {safe_text(msg['content'][:120])}...
+                        </span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+        else:
+            st.info("No chat history yet")
+
+    # ── CLEAR CHAT ───────────────────────────────────────────
+    st.markdown('<hr class="vdivider">', unsafe_allow_html=True)
+
+    if st.button("🧹 Clear Chat"):
+        st.session_state.chat_history = []
+        st.rerun()
 
     # ── Upload ───────────────────────────────────────────────
     st.markdown('<p class="sb-label">📂 Upload Documents</p>', unsafe_allow_html=True)
