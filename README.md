@@ -4,6 +4,11 @@ An intelligent AI-powered assistant that allows users to upload PDF documents an
 
 ---
 
+
+## 🚀 Live Demo
+[https://ai-assistant-w8brbbuiwca85hr6njfdjz.streamlit.app/]
+
+
 ## 🚀 Features
 
 <<<<<<< HEAD
